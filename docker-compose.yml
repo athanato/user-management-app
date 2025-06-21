@@ -28,6 +28,7 @@ services:
 
   jenkins:
     build: ./jenkins
+    user: root
     ports:
       - "8080:8080"
     volumes:
@@ -35,6 +36,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - app-net
+
 
 
 volumes:
