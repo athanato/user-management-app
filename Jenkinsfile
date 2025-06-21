@@ -49,7 +49,8 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                sh 'docker compose exec -T web pytest'
+                sh 'docker compose exec -T web pytest tests/'
+
             }
         }
     }
