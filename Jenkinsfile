@@ -18,8 +18,7 @@ pipeline {
         stage('Health Check') {
             steps {
                 echo 'Checking if web service is healthy...'
-                sh 'curl -f http://web:5000/users || exit 1'
-
+                sh 'curl -f http://localhost:5000/users'  // άλλαξε από web σε localhost
             }
         }
     }
