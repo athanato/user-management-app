@@ -1,40 +1,38 @@
-from flask import Flask, request, jsonify
-from models import db, User
+from flask import Flask, jsonify
+from flask_sqlalchemy import SQLAlchemy
 import os
+import logging
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{os.environ['DB_USER']}:{os.environ['DB_PASS']}@{os.environ['DB_HOST']}/{os.environ['DB_NAME']}"
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db.init_app(app)
 
-@app.route('/users', methods=['POST'])
-def create_user():
-    data = request.json
-    user = User(name=data['name'], email=data['email'])
-    db.session.add(user)
-    db.session.commit()
-    return jsonify({'id': user.id}), 201
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_USER = os.getenv("DB_USER", "user")
+DB_PASS = os.getenv("DB_PASS", "pass")
+DB_NAME = os.getenv("DB_NAME", "usersdb")
 
-@app.route('/users', methods=['GET'])
+app.config["SQLALCHEMY_DATABASE_URI"] = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db = SQLAlchemy(app)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+
+    def serialize(self):
+        return {"id": self.id, "name": self.name}
+
+@app.route("/users")
 def get_users():
-    users = User.query.all()
-    return jsonify([user.serialize() for user in users])
+    try:
+        users = User.query.all()
+        return jsonify([u.serialize() for u in users])
+    except Exception as e:
+        app.logger.error(f"Error fetching users: {e}")
+        return jsonify({"error": str(e)}), 500
 
-@app.route('/users/<int:id>', methods=['PUT'])
-def update_user(id):
-    user = User.query.get_or_404(id)
-    data = request.json
-    user.name = data.get('name', user.name)
-    user.email = data.get('email', user.email)
-    db.session.commit()
-    return jsonify(user.serialize())
-
-@app.route('/users/<int:id>', methods=['DELETE'])
-def delete_user(id):
-    user = User.query.get_or_404(id)
-    db.session.delete(user)
-    db.session.commit()
-    return '', 204
-
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+    with app.app_context():
+        db.create_all()
+    app.run(host="0.0.0.0", port=5000)
