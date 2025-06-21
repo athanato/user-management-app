@@ -1,26 +1,53 @@
+version: '3.8'
+
+networks:
+  app-net:
+    driver: bridge
+
 services:
   db:
     image: postgres:13
     environment:
+      POSTGRES_DB: users
       POSTGRES_USER: user
-      POSTGRES_PASSWORD: pass
-      POSTGRES_DB: usersdb
+      POSTGRES_PASSWORD: password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U user"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
 
   web:
-    build: ./app
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "5000:5000"
     environment:
-      DB_HOST: db
-      DB_USER: user
-      DB_PASS: pass
-      DB_NAME: usersdb
+      FLASK_APP: app.py
+      FLASK_ENV: development
     depends_on:
       db:
         condition: service_healthy
-    command: sh -c "sleep 3 && python app.py"
+    networks:
+      - app-net
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    user: root
+    networks:
+      - app-net
+
+volumes:
+  pgdata:
+  jenkins_home:

@@ -1,24 +1,28 @@
 pipeline {
     agent any
 
+    environment {
+        COMPOSE_FILE = 'docker-compose.ci.yml'
+    }
+
     stages {
         stage('Build containers') {
             steps {
-                sh 'docker compose -f docker-compose.ci.yml build'
+                sh 'docker compose -f $COMPOSE_FILE build'
             }
         }
 
         stage('Start system') {
             steps {
-                sh 'docker compose -f docker-compose.ci.yml up -d'
-                sh 'sleep 10'
+                sh 'docker compose -f $COMPOSE_FILE up -d'
+                sh 'sleep 10' // περιμένουμε λίγο για να ξεκινήσει
             }
         }
 
         stage('Health Check') {
             steps {
                 echo 'Checking if web service is healthy...'
-                sh 'curl -f http://localhost:5000/users'  // άλλαξε από web σε localhost
+                sh 'curl -f http://web:5000/users'
             }
         }
     }
@@ -26,7 +30,7 @@ pipeline {
     post {
         always {
             echo 'Cleaning up containers...'
-            sh 'docker compose -f docker-compose.ci.yml down'
+            sh 'docker compose -f $COMPOSE_FILE down'
         }
     }
 }
