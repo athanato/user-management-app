@@ -30,6 +30,4 @@ volumes:
   pgdata:
 
 networks:
-  default:
-    name: jenkins-ci-net
-
+  app-net:
