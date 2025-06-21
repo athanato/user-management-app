@@ -1,43 +1,41 @@
 pipeline {
     agent any
 
+    environment {
+        COMPOSE_PROJECT_NAME = "userapp"
+    }
+
     stages {
-        stage('Clone Repo') {
+        stage('Checkout') {
             steps {
-                git 'https://github.com/<your-username>/<your-repo>.git'
+                git 'https://github.com/athanato/user-management-app.git'
             }
         }
 
-        stage('Build Flask App') {
+        stage('Build containers') {
             steps {
-                script {
-                    sh 'docker-compose build web'
-                }
+                sh 'docker-compose -f docker-compose.yml build'
             }
         }
 
-        stage('Start Containers') {
+        stage('Start system') {
             steps {
-                script {
-                    sh 'docker-compose up -d'
-                }
+                sh 'docker-compose -f docker-compose.yml up -d'
+                sh 'sleep 10' // περιμένουμε τα services να σηκωθούν
             }
         }
 
-        stage('Run Tests') {
+        stage('Health Check') {
             steps {
-                script {
-                    sh 'sleep 10 && curl -f http://localhost:5000/users || exit 1'
-                }
+                sh 'curl -f http://localhost:5000/users || exit 1'
             }
         }
     }
 
     post {
         always {
-            script {
-                sh 'docker-compose down'
-            }
+            echo 'Cleaning up containers...'
+            sh 'docker-compose -f docker-compose.yml down'
         }
     }
 }
