@@ -18,7 +18,8 @@ pipeline {
         stage('Health Check') {
             steps {
                 echo 'Checking if web service is healthy...'
-                sh 'curl -f http://web:5000/users'
+                sh 'docker compose exec -T web curl -f http://localhost:5000/users'
+
             }
         }
 
