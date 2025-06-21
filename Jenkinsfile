@@ -1,21 +1,17 @@
 pipeline {
     agent any
 
-    environment {
-        COMPOSE_FILE = 'docker-compose.yml'
-    }
-
     stages {
         stage('Build containers') {
             steps {
-                sh 'docker compose -f $COMPOSE_FILE build'
+                sh 'docker compose -f docker-compose.yml build'
             }
         }
 
         stage('Start system') {
             steps {
-                sh 'docker compose -f $COMPOSE_FILE up -d'
-                sh 'sleep 10' // περιμένουμε λίγο για να ξεκινήσει
+                sh 'docker compose -f docker-compose.yml up -d'
+                sh 'sleep 10'
             }
         }
 
@@ -25,12 +21,19 @@ pipeline {
                 sh 'curl -f http://web:5000/users'
             }
         }
+
+        stage('Run Tests') {
+            steps {
+                echo 'Running unit tests...'
+                sh 'docker compose exec -T web pytest tests/'
+            }
+        }
     }
 
     post {
         always {
             echo 'Cleaning up containers...'
-            sh 'docker compose -f $COMPOSE_FILE down'
+            sh 'docker compose -f docker-compose.yml down'
         }
     }
 }
