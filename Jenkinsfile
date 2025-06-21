@@ -2,13 +2,6 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'main',
-                    url: 'https://github.com/athanato/user-management-app.git'
-            }
-        }
-
         stage('Build containers') {
             steps {
                 sh 'docker compose -f docker-compose.yml build'
