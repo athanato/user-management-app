@@ -1,28 +1,24 @@
 pipeline {
     agent any
 
-    environment {
-        COMPOSE_PROJECT_NAME = "userapp"
-    }
-
     stages {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                git 'https://github.com/athanato/user-management-app.git'
+                    url: 'https://github.com/athanato/user-management-app.git'
             }
         }
 
         stage('Build containers') {
             steps {
-                sh 'docker-compose -f docker-compose.yml build'
+                sh 'docker compose -f docker-compose.yml build'
             }
         }
 
         stage('Start system') {
             steps {
-                sh 'docker-compose -f docker-compose.yml up -d'
-                sh 'sleep 10' // περιμένουμε τα services να σηκωθούν
+                sh 'docker compose -f docker-compose.yml up -d'
+                sh 'sleep 10'
             }
         }
 
@@ -36,7 +32,7 @@ pipeline {
     post {
         always {
             echo 'Cleaning up containers...'
-            sh 'docker-compose -f docker-compose.yml down'
+            sh 'docker compose -f docker-compose.yml down'
         }
     }
 }
